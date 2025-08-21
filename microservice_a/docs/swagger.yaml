@@ -1,0 +1,162 @@
+basePath: /
+definitions:
+  handler.ReadingData:
+    properties:
+      id1:
+        type: string
+      id2:
+        type: string
+      sensor_type:
+        type: string
+      sensor_value:
+        type: string
+      time_stamp:
+        type: string
+    type: object
+  handler.Request:
+    properties:
+      frequency:
+        description: 'duration format: "2s", "500ms", "1m"'
+        example: 2s
+        type: string
+      sensor:
+        description: TEMPERATURE, MOTION, HUMIDITY
+        example: TEMPERATURE
+        type: string
+    type: object
+  handler.Response:
+    properties:
+      msg:
+        example: Frequency changed Successfully
+        type: string
+      status:
+        example: S
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@example.com
+    name: API Support
+  description: Backend service for sensor data collection and management.
+  termsOfService: http://swagger.io/terms/
+  title: Sensor Service API
+  version: "1.0"
+paths:
+  /filter-byid:
+    get:
+      description: Returns all sensor readings that match the given ID1 and ID2
+      parameters:
+      - description: ID1 value (e.g., 'A')
+        in: query
+        name: id1
+        required: true
+        type: string
+      - description: ID2 value (e.g., '100')
+        in: query
+        name: id2
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handler.ReadingData'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Retrieve sensor data by ID1 and ID2
+      tags:
+      - sensors
+  /sensors:
+    get:
+      description: Returns all sensor readings from the database
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handler.ReadingData'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Retrieve all sensor data
+      tags:
+      - sensors
+  /sensors/filter-bytime:
+    get:
+      description: Returns all sensor readings between a start and end timestamp
+      parameters:
+      - description: 'Start timestamp (format: YYYY-MM-DD HH:MM:SS)'
+        in: query
+        name: start
+        required: true
+        type: string
+      - description: 'End timestamp (format: YYYY-MM-DD HH:MM:SS)'
+        in: query
+        name: end
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handler.ReadingData'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Retrieve sensor data by time range
+      tags:
+      - sensors
+  /sensors/frequency:
+    put:
+      consumes:
+      - application/json
+      description: Update the data generation frequency for a specific sensor type
+        (TEMPERATURE, MOTION, HUMIDITY).
+      parameters:
+      - description: Sensor type and frequency
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.Request'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Change sensor frequency
+      tags:
+      - sensors
+schemes:
+- http
+swagger: "2.0"
