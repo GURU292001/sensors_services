@@ -1,23 +1,18 @@
-# Build stage
-FROM golang:1.23 AS builder
+# Use full Go toolchain
+FROM golang:1.23
 
-WORKDIR /app
+# Set working directory
+WORKDIR /app/microservice_a
 
-# Copy go.mod and go.sum first
-COPY go.mod go.sum ./
-RUN go mod download
+# Copy module files first to cache dependencies
+# COPY go.mod go.sum ./
+# RUN go mod download
 
-# Copy the entire project (including proto and sensorpb)
+# Copy the full service code
 COPY . .
 
-# Build server
-RUN cd microservice_b && go build -o /server main.go
+# Expose ports
+EXPOSE 50051 8080
 
-# Runtime stage
-FROM ubuntu:22.04
-
-WORKDIR /app
-COPY --from=builder /server .
-
-EXPOSE 1323
-CMD ["./server"]
+# Run server.go directly
+CMD ["go", "run", "server.go"]

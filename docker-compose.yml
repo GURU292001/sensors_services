@@ -1,37 +1,65 @@
-# No version needed in Docker Compose v2
+
 services:
   mysql:
     image: mysql:8.0
-    container_name: mysql_container
+    container_name: sensor_mysql
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: mydb
-      MYSQL_USER: myuser
-      MYSQL_PASSWORD: mypassword
+      MYSQL_DATABASE: sensorsdb
+      MYSQL_USER: sensoruser
+      MYSQL_PASSWORD: sensorpass
     ports:
-      - "3308:3306"
+      - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
-  server:
-    build:
-      context: .
-      dockerfile: microservice_b/Dockerfile
-    container_name: grpc_server
-    ports:
-      - "1323:1323"
+  migrate:
+    image: migrate/migrate
+    container_name: migrate_sensors
     depends_on:
       - mysql
+    volumes:
+      - ./DB/migrations:/migrations
+    command:
+      - "-path=/migrations"
+      - "-database"
+      - "mysql://sensoruser:sensorpass@tcp(mysql:3306)/sensorsdb"
+      - "up"
+    restart: "no"
 
-  client:
+  microservice_a:
     build:
       context: .
       dockerfile: microservice_a/Dockerfile
-    container_name: grpc_client
+    container_name: microservice_a
     depends_on:
-      - server
+      - mysql
+      - migrate
+    ports:
+      - "50051:50051"
+      - "8080:8080"
+    environment:
+      DB_USER: sensoruser
+      DB_PASSWORD: sensorpass
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: sensorsdb
+
+  microservice_b:
+    build:
+      context: .
+      dockerfile: microservice_b/Dockerfile
+    container_name: microservice_b
+    depends_on:
+      - mysql
+      - migrate
+      - microservice_a
 
 volumes:
   mysql_data:

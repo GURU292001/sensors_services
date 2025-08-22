@@ -66,14 +66,28 @@
         },
         "/sensors": {
             "get": {
-                "description": "Returns all sensor readings from the database",
+                "description": "Returns sensor readings with pagination support",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "sensors"
                 ],
-                "summary": "Retrieve all sensor data",
+                "summary": "Retrieve paginated sensor data",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page number (default is 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of records per page (default is 10)",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
